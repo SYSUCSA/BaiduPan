@@ -94,3 +94,13 @@ class BaiduPan(BaiduPanBase):
         r = self._session.get(URL_QUOTA, params=dict2url(param_quota))
         print r.request.url
         print r.text
+
+    def file_list(self):
+        url = "https://pcs.baidu.com/rest/2.0/pcs/file"
+        param = {
+            "method": "list",
+            "access_token": self._access_token,
+            "path": "/apps/bpcs_uploader"
+        }
+        r = self._session.get(url, params=param)
+        print r.text
