@@ -2,9 +2,8 @@
 import json
 import requests
 from lib.dict2url import dict2url, url2dict
-from config import URL_AUTHORIZE, PARAM_AUTH, RESPONSE_TYPE_TOKEN, RESPONSE_TYPE_AUTH_CODE, URL_TOKEN
-from config import TOKEN_TYPE_WEB_SERVER_FLOW, TOKEN_TYPE_USER_AGENT_FLOW
-from config import URL_PCS_REST, PARAM_QUOTA
+from config import URL_AUTHORIZE, PARAM_AUTH, URL_PCS_REST, URL_TOKEN
+from config import RESPONSE_TYPE_TOKEN, RESPONSE_TYPE_AUTH_CODE, TOKEN_TYPE_WEB_SERVER_FLOW, TOKEN_TYPE_USER_AGENT_FLOW
 
 
 class AuthorizeError(Exception):
