@@ -2,7 +2,7 @@
 import json
 import requests
 from lib.dict2url import dict2url, url2dict
-from config import URL_AUTHORIZE, PARAMS_AUTH, URL_PCS_REST, URL_TOKEN
+from config import URL_AUTHORIZE, URL_PCS_REST, URL_TOKEN
 from config import RESPONSE_TYPE_TOKEN, RESPONSE_TYPE_AUTH_CODE, TOKEN_TYPE_WEB_SERVER_FLOW, TOKEN_TYPE_USER_AGENT_FLOW
 
 
@@ -63,27 +63,26 @@ class BaiduPanPCSBase:
         self._access_token = data["access_token"]
 
     def _authorize(self):
-        params_auth = PARAMS_AUTH
-        params_auth["client_id"] = self._api_key
-        params_auth["response_type"] = RESPONSE_TYPE_AUTH_CODE
-        auth_url = URL_AUTHORIZE + "?" + dict2url(params_auth)
-        msg = 'Please visit:\n{authorize_url}\nAnd authorize this app\n' \
-              'Paste the Authorization Code here within 10 minutes.'.format(authorize_url=auth_url)
-        print msg
-        auth_code = raw_input('Input auth_code > ')
+        auth_code = self._oauth(response_type=RESPONSE_TYPE_AUTH_CODE, paste="auth_code")
         self._auth_code = auth_code
 
     def _get_access_token_user_agent_flow(self):
-        params_auth = PARAMS_AUTH
-        params_auth["client_id"] = self._api_key
-        params_auth["response_type"] = RESPONSE_TYPE_TOKEN
-        auth_url = URL_AUTHORIZE + "?" + dict2url(params_auth)
-        msg = 'Please visit:\n{authorize_url}\nAnd authorize this app\n' \
-              'Paste the url or params here within 10 minutes.'.format(authorize_url=auth_url)
-        print msg
-        url = raw_input("Input url or params > ")
+        url = self._oauth(response_type=RESPONSE_TYPE_TOKEN, paste="url or params contains access_token")
         data = url2dict(url)
         self._access_token = data["access_token"]
+
+    def _oauth(self, response_type, paste):
+        params_oauth = {
+            "scope": "netdisk",
+            "redirect_uri": "oob",
+            "response_type": response_type,
+            "client_id": self._api_key,
+        }
+        oauth_url = URL_AUTHORIZE + "?" + dict2url(params_oauth)
+        msg = 'Please visit:\n{authorize_url}\nAnd authorize this app.'.format(authorize_url=oauth_url)
+        print msg
+        data = raw_input('Paste the {paste} here:\n> '.format(paste=paste))
+        return data
 
 
 class BaiduPanPCS(BaiduPanPCSBase):
