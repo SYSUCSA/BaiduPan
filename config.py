@@ -13,10 +13,10 @@ URL_OAUTH = URL_OPENAPI + "/oauth/2.0"
 URL_AUTHORIZE = URL_OAUTH + "/authorize"
 URL_TOKEN = URL_OAUTH + "/token"
 
-URL_PCS = "https://pcs.baidu.com"
+URL_PCS = "https://c.pcs.baidu.com"
 URL_PCS_REST = URL_PCS + "/rest/2.0/pcs/{act}"
 
-PARAM_AUTH = {
+PARAMS_AUTH = {
     "scope": "netdisk",
     "redirect_uri": "oob",
     "response_type": "",
@@ -25,4 +25,4 @@ PARAM_AUTH = {
 
 if __name__ == '__main__':
     from lib.dict2url import dict2url
-    print dict2url(PARAM_AUTH)
+    print dict2url(PARAMS_AUTH)
