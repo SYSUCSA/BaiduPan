@@ -14,7 +14,7 @@ class AuthorizeError(Exception):
         return self.value
 
 
-class BaiduPanPCSBase:
+class PcsBase:
     def __init__(self, access_token=None, token_type=None, api_key=None, secret_key=None, auth_code=None):
         self._session = requests.Session()
 
@@ -85,9 +85,9 @@ class BaiduPanPCSBase:
         return data
 
 
-class BaiduPanPCS(BaiduPanPCSBase):
+class Pcs(PcsBase):
     def __init__(self, app_name, access_token=None, token_type=None, api_key=None, secret_key=None, auth_code=None):
-        BaiduPanPCSBase.__init__(self, access_token, token_type, api_key, secret_key, auth_code)
+        PcsBase.__init__(self, access_token, token_type, api_key, secret_key, auth_code)
         self._appname = app_name
 
     def quota(self):
