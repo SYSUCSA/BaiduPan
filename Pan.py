@@ -154,3 +154,11 @@ class PanBase:
         pubkey = response['pubkey']
         rsakey = response['key']
         return pubkey, rsakey
+
+
+class Pan(PanBase):
+    def __init__(self, username, password, verify_func=verify):
+        PanBase.__init__(self, username, password, verify_func)
+
+    def _save_shared_file(self):
+        pass
