@@ -1,3 +1,4 @@
+import json
 import time
 import requests
 from config import URL_PAN
@@ -8,30 +9,33 @@ class PanBase:
         self._session = requests.session()
         self._username = username
         self._password = password
+        self._token = None
         self._login()
 
     def _login(self):
         self._session.get(URL_PAN)
+        self._get_token()
 
     def _get_token(self):
-        url = "https://passport.baidu.com/v2/api/?getapi"
+        url = 'https://passport.baidu.com/v2/api/?getapi'
         params = {
-            "tpl": "mn",
-            "apiver": "v3",
-            "class": "login",
-            "tt": time.time(),
-            "logintype": "dialogLogin",
-            "callback": "0",
+            'tpl': 'mn',
+            'apiver': 'v3',
+            'class': 'login',
+            'tt': time.time(),
+            'logintype': 'dialogLogin',
+            'callback': '0',
         }
         r = self._session.get(url, params=params, allow_redirects=False)
-        print r.request.headers
-        print r.url
-        print r.status_code
-        print r.text
+        response = json.loads(r.text.replace('\'', '"'))
+        self._token = response['data']['token']
+
+    def _login_check(self):
+        url = 'https://passport.baidu.com/v2/api/?login'
+
 
 
 if __name__ == '__main__':
     # pan_base = PanBase(username=None, password=None)
     # from urlparse import urlparse
     pan_base = PanBase(username=None, password=None)
-    pan_base._get_token()
