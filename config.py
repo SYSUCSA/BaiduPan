@@ -15,3 +15,5 @@ URL_TOKEN = URL_OAUTH + "/token"
 
 URL_PCS = "https://c.pcs.baidu.com"
 URL_PCS_REST = URL_PCS + "/rest/2.0/pcs/{act}"
+
+URL_PAN = "https://pan.baidu.com"
