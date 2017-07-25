@@ -1,5 +1,6 @@
 import json
 import time
+from urllib import quote
 import requests
 from config import URL_PAN
 
@@ -32,10 +33,14 @@ class PanBase:
 
     def _login_check(self):
         url = 'https://passport.baidu.com/v2/api/?login'
-
-
-
-if __name__ == '__main__':
-    # pan_base = PanBase(username=None, password=None)
-    # from urlparse import urlparse
-    pan_base = PanBase(username=None, password=None)
+        params = {
+            'token': self._token,
+            'tpl': 'mn',
+            'apiver': 'v3',
+            'tt': time.time(),
+            'sub_source': 'leadsetpwd',
+            'username': quote(self._username),
+            'isphone': 'false',
+        }
+        r = self._session.get(url, params=params, allow_redirects=False)
+        print r.text
