@@ -28,9 +28,12 @@ class PanApi(PanBase):
         r = self._session.post(url, params=params, data=data)
         response = json.loads(r.text)
         errno = response['errno']
-        if errno == -6:
+        if errno == 0:
+            print '[+] Mkdir {} successfully!'.format(path)
+        elif errno == -6:
             print '[-] There\'s an important parameter wrong. Please check it.'
         elif errno == 2:
             print '[-] Check the parameter [isdir].'
         else:
+            print r.text
             raise PanError('[-] Mkdir error number: {}.'.format(errno))
