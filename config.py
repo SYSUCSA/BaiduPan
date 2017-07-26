@@ -4,7 +4,7 @@ DIR_BASE = get_base_dir()
 DIR_DATA = DIR_BASE + '/data'
 
 HEADERS_USER_AGENT = {
-    'user-agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0',
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:45.0) Gecko/20100101 Firefox/45.0',
 }
 
 # ==========================
@@ -32,6 +32,9 @@ URL_PCS_REST = URL_PCS + '/rest/2.0/pcs/{act}'
 URL_PAN = 'https://pan.baidu.com'
 URL_PAN_SHARE = URL_PAN + '/share'
 URL_PAN_SHARE_API = URL_PAN_SHARE + '/{act}'
+URL_PAN_DISK_HOME = URL_PAN + '/disk/home'
+
+URL_PAN_API = URL_PAN + "/api/{act}"
 
 URL_PASSPORT = 'https://passport.baidu.com'
 URL_PASSPORT_API = URL_PASSPORT + '/v2/api/?{act}'

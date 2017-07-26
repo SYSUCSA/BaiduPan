@@ -12,7 +12,8 @@ from PanError import PanError
 
 from BaiduPan.lib.captcha_verify import verify
 
-from BaiduPan.config import URL_PAN, URL_PASSPORT, URL_PASSPORT_API, URL_INDEX, DIR_DATA, HEADERS_USER_AGENT
+from BaiduPan.config import URL_PAN, URL_PASSPORT, URL_PASSPORT_API, URL_INDEX, URL_PAN_DISK_HOME
+from BaiduPan.config import DIR_DATA, HEADERS_USER_AGENT
 
 pattern_login_error = re.compile(r'auth=&error=(\d+)\'')
 
@@ -31,23 +32,40 @@ class PanBase:
 
     def _login(self):
         try:
-            self._load_cookies()
+            self._login_by_load_cookies()
         except IOError, e:
             # No such file
             if e.errno == 2:
-                self._session.get(URL_PAN)
-                self._get_token()
-                code_string = self._login_check()
-                verify_code = self._verify_captcha(code_string)
-                login_error = self._login_action(verify_code=verify_code, code_string=code_string)
-                if login_error == '0':
-                    print '[+] Login success!'
-                else:
-                    print '[-] Login error. The error code is {}. Please retry.'.format(login_error)
-                if self._flag_save_cookies:
-                    self._save_cookies()
+                self._login_by_username_password()
             else:
                 raise PanError(e.strerror)
+        self._update_stoken()
+        self._remove_panweb_from_cookies()
+
+    def _update_stoken(self):
+        url = URL_PASSPORT + '/v3/login/api/auth/'
+        params = {'return_type': '5', 'tpl': 'netdisk', 'u': URL_PAN_DISK_HOME}
+        self._session.get(url, params=params, allow_redirects=True)
+
+    def _remove_panweb_from_cookies(self):
+        self._session.cookies.clear(name='PANWEB', domain='.pan.baidu.com', path='/')
+
+    def _login_by_load_cookies(self):
+        self._load_cookies()
+
+    def _login_by_username_password(self):
+        self._session.get(URL_PAN)
+        self._get_token()
+        code_string = self._login_check()
+        verify_code = self._verify_captcha(code_string)
+        login_error = self._login_action(verify_code=verify_code, code_string=code_string)
+        print requests.utils.dict_from_cookiejar(self._session.cookies)['STOKEN']
+        if login_error == '0':
+            print '[+] Login success!'
+        else:
+            print '[-] Login error. The error code is {}. Please retry.'.format(login_error)
+        if self._flag_save_cookies:
+            self._save_cookies()
 
     def _get_token(self):
         url_get_api = URL_PASSPORT_API.format(act='getapi')
@@ -164,7 +182,6 @@ class PanBase:
             data = pickle.load(f)
             self._session.cookies = data
         r = self._session.get(URL_INDEX)
-        self._save_cookies()
         if self._username.decode('utf-8') in r.text:
             print '[+] Login success with loading cookies!'
         else:
