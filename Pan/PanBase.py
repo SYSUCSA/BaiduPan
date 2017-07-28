@@ -18,7 +18,7 @@ from BaiduPan.config import DIR_DATA, HEADERS_USER_AGENT
 pattern_login_error = re.compile(r'auth=&error=(\d+)\'')
 
 
-class PanBase:
+class PanBase(object):
     def __init__(self, username, password, verify_func=verify, flag_save_cookies=True):
         self._session = requests.session()
         self._session.headers.update(HEADERS_USER_AGENT)
