@@ -207,6 +207,14 @@ class Pcs(PcsApi):
             print param
             self.create_super_file(path, param, ondup)
 
+    def bulk_upload(self, folder_path, ondup="overwrite"):
+        for fname in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, fname)
+            self.upload("/"+fname, file_path, ondup)
+
+    
+
+
 
 
 
