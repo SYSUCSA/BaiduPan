@@ -1,6 +1,8 @@
 # coding=utf-8
 import json
+import sys
 import requests
+import os.path
 from lib.dict2url import dict2url, url2dict
 from config import URL_AUTHORIZE, URL_PCS_REST, URL_TOKEN
 from config import RESPONSE_TYPE_TOKEN, RESPONSE_TYPE_AUTH_CODE, TOKEN_TYPE_WEB_SERVER_FLOW, TOKEN_TYPE_USER_AGENT_FLOW
@@ -36,7 +38,7 @@ class PcsBase:
 
         if self._api_key is None:
             msg = "\nThe parameter [api_key] is necessary.\nYou can get your api_key by creating app in here:\n" \
-              "http://developer.baidu.com/console#app/"
+                  "http://developer.baidu.com/console#app/"
             print msg
             self._api_key = raw_input("Input API Key > ")
 
@@ -85,7 +87,7 @@ class PcsBase:
         return data
 
 
-class Pcs(PcsBase):
+class PcsApi(PcsBase):
     def __init__(self, app_name, access_token=None, token_type=None, api_key=None, secret_key=None, auth_code=None):
         PcsBase.__init__(self, access_token, token_type, api_key, secret_key, auth_code)
         self._appname = app_name
@@ -105,7 +107,7 @@ class Pcs(PcsBase):
             "path": "/apps/" + self._appname
         }
         r = self._session.get(URL_PCS_REST.format(act="file"), params=params)
-        print r.text
+        print r.content
 
     def upload_single_file(self, path, files, ondup="overwrite"):
         params = {
@@ -116,3 +118,103 @@ class Pcs(PcsBase):
         }
         r = self._session.post(URL_PCS_REST.format(act="file"), params=params, files=files)
         print r.text
+
+    def upload_tmp_file(self, files):
+        params = {
+            "method": "upload",
+            "access_token": self._access_token,
+            "type": "tmpfile"
+        }
+        r = self._session.post(URL_PCS_REST.format(act="file"), params=params, files=files)
+        print r.text
+        return r.content[8:40]
+
+    def create_super_file(self, path, param, ondup="overwrite"):
+        params = {
+            "method": "createsuperfile",
+            "access_token": self._access_token,
+            "path": "/apps/" + self._appname + path,
+            "ondup": ondup
+        }
+        r = self._session.post(URL_PCS_REST.format(act="file"), params=params, data={'param':json.dumps(param)})
+        print r.text
+
+    def download_single_file(self, path):
+        URL_PCS = "https://d.pcs.baidu.com"
+        params = {
+            "method": "download",
+            "access_token": self._access_token,
+            "path": path,
+        }
+        r = self._session.get(URL_PCS_REST.format(act="file"), params=params)
+        filename = os.path.basename(path)
+        if not os.path.exists("download/"):
+            os.mkdir("download/")
+        file_path = "download/" + filename
+        with open(file_path,'w') as f:
+            f.write(r.content)
+
+class Pcs(PcsApi):
+    def __init__(self, app_name, access_token=None, token_type=None, api_key=None, secret_key=None, auth_code=None):
+        PcsApi.__init__(self, app_name, access_token, token_type, api_key, secret_key, auth_code)
+
+    def list(self):
+        self.file_list()
+
+    def download(self, path):
+        self.download_single_file(path)
+
+    def split_file(self, file_path):
+        todir = "tmpfiles/"
+        chunksize = int(1.5*1024*1024*1024)
+        if not os.path.exists(todir):  # check whether todir exists or not
+            os.mkdir(todir)
+        else:
+            for fname in os.listdir(todir):
+                os.remove(os.path.join(todir, fname))
+        partnum = 0
+        superfile = open(file_path, 'rb')  # open the file
+        while True:
+            chunk = superfile.read(chunksize)
+            if not chunk:  # check the chunk is empty
+                break
+            partnum += 1
+            filename = os.path.join(todir, ('part%04d' % partnum))
+            fileobj = open(filename, 'wb')  # make partfile
+            fileobj.write(chunk)  # write data into partfile
+            fileobj.close()
+        return partnum
+
+    def upload(self, path, file_path, ondup="overwrite"):
+        filesize = os.path.getsize(file_path)
+        if filesize <= 2*1024*1024*1024:
+            files = {'file': open(file_path, 'rb')}
+            self.upload_single_file(path, files, ondup)
+        else:
+            try:
+                parts = self.split_file(file_path) #split file to tmp files
+            except:
+                print('Error during split:')
+                print(sys.exc_info()[0], sys.exc_info()[1])
+            else:
+                print('split finished:', parts, 'parts are in tmpfiles/')
+            block_list = []
+            for fname in os.listdir("tmpfiles/"):
+                files = {'file': open(os.path.join("tmpfiles/", fname), 'rb')}
+                md5 = self.upload_tmp_file(files)
+                block_list.append(md5)# upload tmp files
+            param = {"block_list": block_list}
+            print param
+            self.create_super_file(path, param, ondup)
+
+    def bulk_upload(self, folder_path, ondup="overwrite"):
+        for fname in os.listdir(folder_path):
+            file_path = os.path.join(folder_path, fname)
+            self.upload("/"+fname, file_path, ondup)
+
+    
+
+
+
+
+
