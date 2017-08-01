@@ -41,7 +41,6 @@ class PanApi(PanBase):
         }
         r = self._session.post(url, params=params, data=data)
         response = json.loads(r.text)
-        print response
         errno = response['errno']
         if errno == 0:
             print '[+] Mkdir \'{}\' successfully!'.format(response['path'])

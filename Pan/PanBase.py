@@ -9,18 +9,39 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_v1_5
 
 from PanError import PanError
-
 from BaiduPan.lib.captcha_verify import verify
-
-from BaiduPan.config import URL_PAN, URL_PASSPORT, URL_PASSPORT_API, URL_INDEX, URL_PAN_DISK_HOME
 from BaiduPan.config import DIR_DATA, HEADERS_USER_AGENT
+from BaiduPan.config import URL_PAN, URL_PASSPORT, URL_PASSPORT_API, URL_INDEX, URL_PAN_DISK_HOME
 
 pattern_login_error = re.compile(r'auth=&error=(\d+)\'')
+pattern_set_cookie_panweb = re.compile(r',?PANWEB=1; expires=.*?; path=.*?; domain=\S+,? ?')
+
+
+class CustomSession(requests.Session):
+    def request(self, *args, **kwargs):
+        self._remove_panweb_from_cookies()
+        return super(CustomSession, self).request(*args, **kwargs)
+
+    def resolve_redirects(self, resp, *args, **kwargs):
+        try:
+            set_cookie = resp.raw.headers.pop('Set-Cookie')
+            set_cookie = re.sub(pattern_set_cookie_panweb, '', set_cookie)
+            resp.raw.headers.add('Set-Cookie', set_cookie)
+        except KeyError:
+            pass
+        return super(CustomSession, self).resolve_redirects(resp, *args, **kwargs)
+
+    def _remove_panweb_from_cookies(self):
+        # self.cookies.clear(name='PANWEB', domain='.pan.baidu.com', path='/')
+        try:
+            self.cookies.clear(name='PANWEB', domain='.pan.baidu.com', path='/')
+        except KeyError:
+            pass
 
 
 class PanBase(object):
     def __init__(self, username, password, verify_func=verify, flag_save_cookies=True):
-        self._session = requests.session()
+        self._session = CustomSession()
         self._session.headers.update(HEADERS_USER_AGENT)
         self._username = username
         self._password = password
@@ -40,15 +61,11 @@ class PanBase(object):
             else:
                 raise PanError(e.strerror)
         self._update_stoken()
-        self._remove_panweb_from_cookies()
 
     def _update_stoken(self):
         url = URL_PASSPORT + '/v3/login/api/auth/'
         params = {'return_type': '5', 'tpl': 'netdisk', 'u': URL_PAN_DISK_HOME}
         self._session.get(url, params=params, allow_redirects=True)
-
-    def _remove_panweb_from_cookies(self):
-        self._session.cookies.clear(name='PANWEB', domain='.pan.baidu.com', path='/')
 
     def _login_by_load_cookies(self):
         self._load_cookies()
